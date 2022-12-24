@@ -118,3 +118,60 @@ SET OwnerSplitState = PARSENAME(REPLACE(OwnerAddress, ',', '.'), 1)
 
 SELECT *
 FROM NashvilleHousing
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+-- Change Y and N to Yes and No in "SoldAsVacant" field
+
+SELECT DISTINCT(SoldAsVacant), COUNT(SoldAsVacant)
+FROM [Portfolio Project]..NashvilleHousing
+GROUP BY SoldAsVacant
+ORDER BY 2
+
+
+SELECT SoldAsVacant
+, CASE WHEN SoldAsVacant = 'Y' THEN 'Yes'
+	   WHEN SoldAsVacant = 'N' THEN 'No'
+	   ELSE SoldAsVacant
+	   END
+FROM [Portfolio Project]..NashvilleHousing
+
+UPDATE [Portfolio Project]..NashvilleHousing
+SET SoldAsVacant = CASE WHEN SoldAsVacant = 'Y' THEN 'Yes'
+						WHEN SoldAsVacant = 'N' THEN 'No'
+						ELSE SoldAsVacant
+						END
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+-- Remove Duplicates
+
+WITH RowNumCTE AS (
+SELECT *,
+	ROW_NUMBER() OVER (
+	PARTITION BY ParcelID,
+				 PropertyAddress,
+				 SalePrice,
+				 SaleDate,
+				 LegalReference
+				 ORDER BY
+					UniqueID
+					) row_num
+FROM [Portfolio Project]..NashvilleHousing
+)
+DELETE
+FROM RowNumCTE
+WHERE row_num > 1
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+-- Delete Unused Columns
+
+SELECT *
+FROM [Portfolio Project]..NashvilleHousing
+
+ALTER TABLE [Portfolio Project]..NashvilleHousing
+DROP COLUMN PropertyAddress, OwnerAddress, TaxDistrict, SaleDate
